@@ -42,6 +42,9 @@ import * as unread from "./unread.ts";
 import * as unread_ops from "./unread_ops.ts";
 import {user_settings} from "./user_settings.ts";
 import * as util from "./util.ts";
+import { get_subscriber_count } from "./stream_data.ts"
+import { get_topic_amount, get_followed_amount_for_topic } from "./topic_list.ts";
+
 
 // In this module, we manage stream popovers
 // that pop up from the left sidebar.
@@ -93,7 +96,7 @@ function stream_popover_sub(
     return sub;
 }
 
-function build_stream_popover(opts: {elt: HTMLElement; stream_id: number}): void {
+async function build_stream_popover(opts: {elt: HTMLElement; stream_id: number}) {
     const {elt, stream_id} = opts;
 
     // This will allow the user to close the popover by clicking
@@ -101,6 +104,11 @@ function build_stream_popover(opts: {elt: HTMLElement; stream_id: number}): void
     if (popover_menus.get_stream_actions_popover()?.reference === elt) {
         return;
     }
+
+    const subscriber_count = get_subscriber_count(stream_id);
+    const amount = await get_topic_amount(stream_id); 
+    const followed_amount = await get_followed_amount_for_topic(stream_id);
+    // console.log("followed_amount: ", followed_amount)
 
     const stream_hash = hash_util.by_stream_url(stream_id);
     const show_go_to_channel_feed =
@@ -113,9 +121,13 @@ function build_stream_popover(opts: {elt: HTMLElement; stream_id: number}): void
         stream: {
             ...sub_store.get(stream_id),
             url: browser_history.get_full_url(stream_hash),
+            subscriber_count,
+            amount,
+            followed_amount
         },
         has_unread_messages,
         show_go_to_channel_feed,
+        
     });
 
     popover_menus.toggle_popover_menu(elt, {

@@ -58,6 +58,7 @@ export function initialize(): void {
                 const context = popover_menus_data.get_topic_popover_content_context(
                     get_conversation(instance),
                 );
+                // console.log("Context: ", context);
                 instance.setContent(
                     ui_util.parse_html(render_left_sidebar_topic_actions_popover(context)),
                 );

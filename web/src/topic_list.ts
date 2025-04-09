@@ -16,6 +16,8 @@ import * as stream_topic_history_util from "./stream_topic_history_util.ts";
 import * as topic_list_data from "./topic_list_data.ts";
 import type {TopicInfo} from "./topic_list_data.ts";
 import * as vdom from "./vdom.ts";
+import * as user_topics from "./user_topics.ts";
+
 
 /*
     Track all active widgets with a Map by stream_id.
@@ -305,6 +307,43 @@ export function scroll_zoomed_in_topic_into_view(): void {
     const sticky_header_height = stream_header_height + topic_header_height;
     scroll_util.scroll_element_into_container($selected_topic, $container, sticky_header_height);
 }
+
+
+export async function get_topic_amount(stream_id: number): Promise<number> {
+    return new Promise((resolve, reject) => {
+        stream_topic_history_util.retrieve_topic_amount(stream_id, (count) => {
+            resolve(count);
+        });
+    });
+}
+
+export async function get_followed_amount_for_topic(
+    stream_id: number
+): Promise<number> {
+    let followed_amount = 0;
+
+    const topic_names = await get_topic_data(stream_id);
+    // console.log("topic_names: ", topic_names);
+
+    for (const topic_name of topic_names) {
+        const policy = user_topics.get_topic_visibility_policy(stream_id, topic_name.name);
+        if (policy === user_topics.all_visibility_policies.FOLLOWED) {
+            followed_amount += 1;
+        }
+        // console.log("topic_name: ", topic_name)
+        // console.log("followed_amount: ", followed_amount)
+    }
+    return followed_amount;
+}
+
+async function get_topic_data(stream_id: number): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+        stream_topic_history_util.retrieve_topic_data(stream_id, (topics) => {
+            resolve(topics);
+        });
+    });
+}
+
 
 // For zooming, we only do topic-list stuff here...let stream_list
 // handle hiding/showing the non-narrowed streams

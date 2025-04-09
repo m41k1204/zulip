@@ -4,6 +4,7 @@ import {z} from "zod";
 import * as channel from "./channel.ts";
 import * as stream_topic_history from "./stream_topic_history.ts";
 
+
 const stream_topic_history_response_schema = z.object({
     topics: z.array(
         z.object({
@@ -31,9 +32,74 @@ export function get_server_history(stream_id: number, on_success: () => void): v
         success(raw_data) {
             const data = stream_topic_history_response_schema.parse(raw_data);
             const server_history = data.topics;
+            console.log("Server History: ", server_history)
             stream_topic_history.add_history(stream_id, server_history);
             stream_topic_history.remove_request_pending_for(stream_id);
             on_success();
+        },
+        error() {
+            stream_topic_history.remove_request_pending_for(stream_id);
+        },
+    });
+}
+
+export function retrieve_topic_amount(
+    stream_id: number,
+    on_success: (count: number) => void,
+): void {
+
+    if (stream_topic_history.is_request_pending_for(stream_id)) {
+        return;
+    }
+
+    stream_topic_history.add_request_pending_for(stream_id);
+
+    const url = "/json/users/me/" + stream_id + "/topics-amount-followers";
+
+    void channel.get({
+        url,
+        data: {allow_empty_topic_name: true},
+        success(raw_data) {
+            const data = stream_topic_history_response_schema.parse(raw_data);
+            const server_history = data.topics;
+            // console.log("topics: " , data.topics)
+
+            stream_topic_history.add_history(stream_id, server_history);
+            stream_topic_history.remove_request_pending_for(stream_id);
+
+            on_success(server_history.length);
+        },
+        error() {
+            stream_topic_history.remove_request_pending_for(stream_id);
+        },
+    });
+}
+
+export function retrieve_topic_data(
+    stream_id: number,
+    on_success: (topics: any[]) => void, 
+): void {
+
+    if (stream_topic_history.is_request_pending_for(stream_id)) {
+        return;
+    }
+
+    stream_topic_history.add_request_pending_for(stream_id);
+
+    const url = "/json/users/me/" + stream_id + "/topics-amount-followers";
+
+    void channel.get({
+        url,
+        data: {allow_empty_topic_name: true},
+        success(raw_data) {
+            const data = stream_topic_history_response_schema.parse(raw_data);
+            const server_history = data.topics;
+            // console.log("topics: " , data.topics)
+
+            stream_topic_history.add_history(stream_id, server_history);
+            stream_topic_history.remove_request_pending_for(stream_id);
+
+            on_success(server_history); 
         },
         error() {
             stream_topic_history.remove_request_pending_for(stream_id);

@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from django.conf import settings
 from django.conf.urls import include
@@ -175,6 +176,7 @@ from zerver.views.streams import (
     get_streams_backend,
     get_subscribers_backend,
     get_topics_backend,
+    retrieve_topics,
     json_get_stream_id,
     list_subscriptions_backend,
     remove_default_stream,
@@ -485,6 +487,9 @@ v1_api_and_json_patterns = [
     ),
     rest_path(
         "users/me/<int:stream_id>/topics", GET=(get_topics_backend, {"allow_anonymous_user_web"})
+    ),
+    rest_path(
+        "users/me/<int:stream_id>/topics-amount-followers", GET=(retrieve_topics, {"allow_anonymous_user_web"})
     ),
     # streams -> zerver.views.streams
     # (this API is only used externally)
@@ -900,6 +905,8 @@ if not settings.CORPORATE_ENABLED:  # nocoverage
 
 # Two-factor URLs
 if settings.TWO_FACTOR_AUTHENTICATION_ENABLED:  # nocoverage
+    tf_twilio_urls: Any
+    tf_urls:Any
     urls += [path("", include(tf_urls)), path("", include(tf_twilio_urls))]
 
 if settings.DEVELOPMENT:

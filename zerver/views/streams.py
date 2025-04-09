@@ -1007,8 +1007,45 @@ def get_topics_backend(
             public_history=stream.is_history_public_to_subscribers(),
             allow_empty_topic_name=allow_empty_topic_name,
         )
+    
+    print("result: ", result)
+    return json_success(request, data=dict(topics=result))
+
+
+@typed_endpoint
+def retrieve_topics(request: HttpRequest, 
+                    maybe_user_profile: UserProfile | AnonymousUser,
+                    *,      
+                    stream_id: PathOnly[NonNegativeInt],
+                    allow_empty_topic_name: Json[bool] = False)-> HttpResponse:
+
+    if not maybe_user_profile.is_authenticated:
+        is_web_public_query = True
+        user_profile: UserProfile | None = None
+    else:
+        is_web_public_query = False
+        assert isinstance(maybe_user_profile, UserProfile)
+        user_profile = maybe_user_profile
+        assert user_profile is not None
+
+
+    if not is_web_public_query:
+        assert user_profile is not None
+
+        (stream, sub) = access_stream_by_id(user_profile, stream_id)
+
+        assert stream.recipient_id is not None
+        result = get_topic_history_for_stream(
+            user_profile=user_profile,
+            recipient_id=stream.recipient_id,
+            public_history=stream.is_history_public_to_subscribers(),
+            allow_empty_topic_name=allow_empty_topic_name,
+        )
+        print("Result:" , result)
 
     return json_success(request, data=dict(topics=result))
+
+
 
 
 @require_realm_admin

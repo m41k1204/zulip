@@ -336,6 +336,8 @@ def get_topic_history_for_stream(
     rows = cursor.fetchall()
     cursor.close()
 
+    #sql query
+
     return generate_topic_history_from_db_rows(rows, allow_empty_topic_name)
 
 
